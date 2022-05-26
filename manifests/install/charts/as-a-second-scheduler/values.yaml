@@ -5,13 +5,13 @@
 
 scheduler:
   name: scheduler-plugins-scheduler
-  image: k8s.gcr.io/scheduler-plugins/kube-scheduler:v0.22.6
+  image: quay.io/pbastide_rh/openshift-demo@sha256:7e12f7637c0c2602ce7b08babe19cac4c5f284bc5084fd0139ef5d51f012e749
   namespace: scheduler-plugins
   replicaCount: 1
 
 controller:
   name: scheduler-plugins-controller
-  image: k8s.gcr.io/scheduler-plugins/controller:v0.22.6
+  image: quay.io/pbastide_rh/openshift-demo@sha256:a16959b476ddc961ae3aed218af3d7ac3479bdae9c53cb8a8cba0a877c7413ea
   namespace: scheduler-plugins
   replicaCount: 1
 
