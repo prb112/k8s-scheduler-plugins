@@ -43,7 +43,7 @@ You can find the demo chart in [manifests/install/charts](../manifests/install/c
 1. Helm install.
 
     ```bash
-    $ git clone git@github.com:kubernetes-sigs/scheduler-plugins.git
+    $ git clone git@github.com:prb112/k8s-scheduler-plugins.git
     $ cd scheduler-plugins/manifests/install/charts
     $ helm install scheduler-plugins as-a-second-scheduler/
       ...
