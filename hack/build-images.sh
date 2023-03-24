@@ -31,24 +31,29 @@ RELEASE_VERSION=${RELEASE_VERSION:-"v0.0.0"}
 
 BUILDER=${BUILDER:-"docker"}
 
+# -t is the Docker engine default
+TAG_FLAG="-t"
+
+# nerdctl doesn't seem to have buildx
 if ! command -v ${BUILDER} && command -v nerdctl >/dev/null; then
   BUILDER=nerdctl
 fi
 
-ARCH=${ARCH:-$(go env GOARCH)}
-if [[ "${ARCH}" == "arm64" ]]; then
-  ARCH="arm64v8"
+# podman needs the manifest flag in order to create a single image.
+if [[ "${BUILDER}" == "podman" ]]
+then
+  TAG_FLAG="--manifest"
 fi
 
 cd "${SCRIPT_ROOT}"
+${BUILDER} buildx build \
+            --platform=${PLATFORMS} \
+            -f ${SCHEDULER_DIR}/Dockerfile \
+            --build-arg RELEASE_VERSION=${RELEASE_VERSION} \
+            ${TAG_FLAG} ${REGISTRY}/${IMAGE} .
 
-${BUILDER} build \
-           -f ${SCHEDULER_DIR}/Dockerfile \
-           --build-arg ARCH=${ARCH} \
-           --build-arg RELEASE_VERSION=${RELEASE_VERSION} \
-           -t ${REGISTRY}/${IMAGE} .
-${BUILDER} build \
-           -f ${CONTROLLER_DIR}/Dockerfile \
-           --build-arg ARCH=${ARCH} \
-           --build-arg RELEASE_VERSION=${RELEASE_VERSION} \
-           -t ${REGISTRY}/${CONTROLLER_IMAGE} .
+${BUILDER} buildx build \
+            --platform=${PLATFORMS} \
+            -f ${CONTROLLER_DIR}/Dockerfile \
+            --build-arg RELEASE_VERSION=${RELEASE_VERSION} \
+            ${TAG_FLAG} ${REGISTRY}/${CONTROLLER_IMAGE} .
