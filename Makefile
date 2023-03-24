@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARCHS = amd64 arm64
+ARCHS = amd64 arm64 ppc64le
 COMMONENVVAR=GOOS=$(shell uname -s | tr A-Z a-z)
 BUILDENVVAR=CGO_ENABLED=0
 INTEGTESTENVVAR=SCHED_PLUGINS_TEST_VERBOSE=1
@@ -45,6 +45,9 @@ build.amd64: build-controller.amd64 build-scheduler.amd64
 .PHONY: build.arm64v8
 build.arm64v8: build-controller.arm64v8 build-scheduler.arm64v8
 
+.PHONY: build.ppc64le
+build.ppc64le: build-controller.ppc64le build-scheduler.ppc64le
+
 .PHONY: build-controller
 build-controller:
 	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-w' -o bin/controller cmd/controller/controller.go
@@ -57,6 +60,10 @@ build-controller.amd64:
 build-controller.arm64v8:
 	$(COMMONENVVAR) $(BUILDENVVAR) GOARCH=arm64 go build -ldflags '-w' -o bin/controller cmd/controller/controller.go
 
+.PHONY: build-controller.ppc64le
+build-controller.ppc64le:
+	$(COMMONENVVAR) $(BUILDENVVAR) GOOS=linux GOARCH=ppc64le go build -ldflags '-w' -o bin/controller cmd/controller/controller.go
+
 .PHONY: build-scheduler
 build-scheduler:
 	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION) -w' -o bin/kube-scheduler cmd/scheduler/main.go
@@ -68,6 +75,10 @@ build-scheduler.amd64:
 .PHONY: build-scheduler.arm64v8
 build-scheduler.arm64v8:
 	$(COMMONENVVAR) $(BUILDENVVAR) GOARCH=arm64 go build -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION) -w' -o bin/kube-scheduler cmd/scheduler/main.go
+
+.PHONY: build-scheduler.ppc64le
+build-scheduler.ppc64le:
+	$(COMMONENVVAR) $(BUILDENVVAR) GOARCH=ppc64le go build -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION) -w' -o bin/kube-scheduler cmd/scheduler/main.go
 
 .PHONY: local-image
 local-image: clean
@@ -91,8 +102,17 @@ release-image.arm64v8: clean
 	CONTROLLER_IMAGE=$(RELEASE_CONTROLLER_IMAGE)-arm64 \
 	hack/build-images.sh
 
+.PHONY: release-image.ppc64le
+release-image.ppc64le: clean
+	ARCH="ppc64le" \
+	RELEASE_VERSION=$(RELEASE_VERSION) \
+	REGISTRY=$(RELEASE_REGISTRY) \
+	IMAGE=$(RELEASE_IMAGE)-ppc64le \
+	CONTROLLER_IMAGE=$(RELEASE_CONTROLLER_IMAGE)-ppc64le \
+	hack/build-images.sh
+
 .PHONY: push-release-images
-push-release-images: release-image.amd64 release-image.arm64v8
+push-release-images: release-image.amd64 release-image.arm64v8 release-image.ppc64le
 	gcloud auth configure-docker
 	for arch in $(ARCHS); do \
 		docker push $(RELEASE_REGISTRY)/$(RELEASE_IMAGE)-$${arch} ;\

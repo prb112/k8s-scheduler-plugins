@@ -35,6 +35,10 @@ if ! command -v ${BUILDER} && command -v nerdctl >/dev/null; then
   BUILDER=nerdctl
 fi
 
+if ! command -v ${BUILDER} && command -v podman >/dev/null; then
+  BUILDER=podman
+fi
+
 ARCH=${ARCH:-$(go env GOARCH)}
 if [[ "${ARCH}" == "arm64" ]]; then
   ARCH="arm64v8"
