@@ -21,9 +21,13 @@ COPY . .
 ARG ARCH
 RUN make build-controller.$ARCH
 
-FROM $ALPINE_BASE_IMAGE:3.16
+# Reference from https://github.com/kubernetes-sigs/cluster-api/blob/e52848c7dbb8bd688fdf87a9453735b6ffa0d366/cmd/clusterctl/Dockerfile
+FROM gcr.io/distroless/static:nonroot-${ARCH}
 
 COPY --from=0 /go/src/sigs.k8s.io/scheduler-plugins/bin/controller /bin/controller
 
 WORKDIR /bin
+# Refer to https://github.com/kubernetes-sigs/cluster-api/blob/main/Dockerfile
+# Use uid of nonroot user (65532) because kubernetes expects numeric user when applying pod security policies
+USER 65532
 CMD ["controller"]

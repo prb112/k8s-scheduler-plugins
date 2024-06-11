@@ -22,9 +22,11 @@ ARG ARCH
 ARG RELEASE_VERSION
 RUN RELEASE_VERSION=${RELEASE_VERSION} make build-scheduler.$ARCH
 
-FROM $ALPINE_BASE_IMAGE:3.16
+FROM gcr.io/distroless/static:nonroot-${ARCH}
 
 COPY --from=0 /go/src/sigs.k8s.io/scheduler-plugins/bin/kube-scheduler /bin/kube-scheduler
 
 WORKDIR /bin
+# Use uid of nonroot user (65532) because kubernetes expects numeric user when applying pod security policies
+USER 65532
 CMD ["kube-scheduler"]
