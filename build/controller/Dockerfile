@@ -13,7 +13,7 @@
 # limitations under the License.
 ARG ARCH
 ARG GO_BASE_IMAGE=golang
-ARG ALPINE_BASE_IMAGE=$ARCH/alpine
+ARG DISTROLESS_BASE_IMAGE=gcr.io/distroless/static:nonroot-$ARCH
 FROM $GO_BASE_IMAGE:1.21
 
 WORKDIR /go/src/sigs.k8s.io/scheduler-plugins
@@ -22,7 +22,7 @@ ARG ARCH
 RUN make build-controller.$ARCH
 
 # Reference from https://github.com/kubernetes-sigs/cluster-api/blob/e52848c7dbb8bd688fdf87a9453735b6ffa0d366/cmd/clusterctl/Dockerfile
-FROM gcr.io/distroless/static:nonroot-${ARCH}
+FROM $DISTROLESS_BASE_IMAGE
 
 COPY --from=0 /go/src/sigs.k8s.io/scheduler-plugins/bin/controller /bin/controller
 

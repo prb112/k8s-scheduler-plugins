@@ -12,6 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+ifeq ($(shell command -v podman 2> /dev/null),)
+    DOCKER=docker
+else
+    DOCKER=podman
+endif
+
 ARCHS = amd64 arm64 s390x ppc64le
 COMMONENVVAR=GOOS=$(shell uname -s | tr A-Z a-z)
 BUILDENVVAR=CGO_ENABLED=0
@@ -104,7 +110,7 @@ release-image.amd64: clean
 	IMAGE=$(RELEASE_IMAGE)-amd64 \
 	CONTROLLER_IMAGE=$(RELEASE_CONTROLLER_IMAGE)-amd64 \
 	GO_BASE_IMAGE=$(GO_BASE_IMAGE) \
-	ALPINE_BASE_IMAGE=$(ALPINE_BASE_IMAGE) \
+	DISTROLESS_BASE_IMAGE=$(DISTROLESS_BASE_IMAGE) \
 	hack/build-images.sh
 
 .PHONY: release-image.arm64v8
@@ -115,7 +121,7 @@ release-image.arm64v8: clean
 	IMAGE=$(RELEASE_IMAGE)-arm64 \
 	CONTROLLER_IMAGE=$(RELEASE_CONTROLLER_IMAGE)-arm64 \
 	GO_BASE_IMAGE=$(GO_BASE_IMAGE) \
-	ALPINE_BASE_IMAGE=$(ALPINE_BASE_IMAGE) \
+	DISTROLESS_BASE_IMAGE=$(DISTROLESS_BASE_IMAGE) \
 	hack/build-images.sh
 
 .PHONY: release-image.ppc64le
@@ -126,7 +132,7 @@ release-image.ppc64le: clean
 	IMAGE=$(RELEASE_IMAGE)-ppc64le \
 	CONTROLLER_IMAGE=$(RELEASE_CONTROLLER_IMAGE)-ppc64le \
 	GO_BASE_IMAGE=$(GO_BASE_IMAGE) \
-	ALPINE_BASE_IMAGE=$(ALPINE_BASE_IMAGE) \
+	DISTROLESS_BASE_IMAGE=$(DISTROLESS_BASE_IMAGE) \
 	hack/build-images.sh
 
 .PHONY: release-image.s390x
@@ -137,24 +143,24 @@ release-image.s390x: clean
 	IMAGE=$(RELEASE_IMAGE)-s390x \
 	CONTROLLER_IMAGE=$(RELEASE_CONTROLLER_IMAGE)-s390x \
 	GO_BASE_IMAGE=$(GO_BASE_IMAGE) \
-	ALPINE_BASE_IMAGE=$(ALPINE_BASE_IMAGE) \
+	DISTROLESS_BASE_IMAGE=$(DISTROLESS_BASE_IMAGE) \
 	hack/build-images.sh
 
 .PHONY: push-release-images
 push-release-images: release-image.amd64 release-image.arm64v8 release-image.s390x release-image.ppc64le
 	gcloud auth configure-docker
 	for arch in $(ARCHS); do \
-		docker push $(RELEASE_REGISTRY)/$(RELEASE_IMAGE)-$${arch} ;\
-		docker push $(RELEASE_REGISTRY)/$(RELEASE_CONTROLLER_IMAGE)-$${arch} ;\
+		$(DOCKER) push $(RELEASE_REGISTRY)/$(RELEASE_IMAGE)-$${arch} ;\
+		$(DOCKER) push $(RELEASE_REGISTRY)/$(RELEASE_CONTROLLER_IMAGE)-$${arch} ;\
 	done
-	DOCKER_CLI_EXPERIMENTAL=enabled docker manifest create $(RELEASE_REGISTRY)/$(RELEASE_IMAGE) $(addprefix --amend $(RELEASE_REGISTRY)/$(RELEASE_IMAGE)-, $(ARCHS))
-	DOCKER_CLI_EXPERIMENTAL=enabled docker manifest create $(RELEASE_REGISTRY)/$(RELEASE_CONTROLLER_IMAGE) $(addprefix --amend $(RELEASE_REGISTRY)/$(RELEASE_CONTROLLER_IMAGE)-, $(ARCHS))
+	DOCKER_CLI_EXPERIMENTAL=enabled $(DOCKER) manifest create $(RELEASE_REGISTRY)/$(RELEASE_IMAGE) $(addprefix --amend $(RELEASE_REGISTRY)/$(RELEASE_IMAGE)-, $(ARCHS))
+	DOCKER_CLI_EXPERIMENTAL=enabled $(DOCKER) manifest create $(RELEASE_REGISTRY)/$(RELEASE_CONTROLLER_IMAGE) $(addprefix --amend $(RELEASE_REGISTRY)/$(RELEASE_CONTROLLER_IMAGE)-, $(ARCHS))
 	for arch in $(ARCHS); do \
-		DOCKER_CLI_EXPERIMENTAL=enabled docker manifest annotate --arch $${arch} $(RELEASE_REGISTRY)/$(RELEASE_IMAGE) $(RELEASE_REGISTRY)/$(RELEASE_IMAGE)-$${arch} ;\
-		DOCKER_CLI_EXPERIMENTAL=enabled docker manifest annotate --arch $${arch} $(RELEASE_REGISTRY)/$(RELEASE_CONTROLLER_IMAGE) $(RELEASE_REGISTRY)/$(RELEASE_CONTROLLER_IMAGE)-$${arch} ;\
+		DOCKER_CLI_EXPERIMENTAL=enabled $(DOCKER) manifest annotate --arch $${arch} $(RELEASE_REGISTRY)/$(RELEASE_IMAGE) $(RELEASE_REGISTRY)/$(RELEASE_IMAGE)-$${arch} ;\
+		DOCKER_CLI_EXPERIMENTAL=enabled $(DOCKER) manifest annotate --arch $${arch} $(RELEASE_REGISTRY)/$(RELEASE_CONTROLLER_IMAGE) $(RELEASE_REGISTRY)/$(RELEASE_CONTROLLER_IMAGE)-$${arch} ;\
 	done
-	DOCKER_CLI_EXPERIMENTAL=enabled docker manifest push $(RELEASE_REGISTRY)/$(RELEASE_IMAGE) ;\
-	DOCKER_CLI_EXPERIMENTAL=enabled docker manifest push $(RELEASE_REGISTRY)/$(RELEASE_CONTROLLER_IMAGE) ;\
+	DOCKER_CLI_EXPERIMENTAL=enabled $(DOCKER) manifest push $(RELEASE_REGISTRY)/$(RELEASE_IMAGE) ;\
+	DOCKER_CLI_EXPERIMENTAL=enabled $(DOCKER) manifest push $(RELEASE_REGISTRY)/$(RELEASE_CONTROLLER_IMAGE) ;\
 
 .PHONY: update-vendor
 update-vendor:
