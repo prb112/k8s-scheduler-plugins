@@ -52,6 +52,9 @@ build.amd64: build-controller.amd64 build-scheduler.amd64
 .PHONY: build.arm64v8
 build.arm64v8: build-controller.arm64v8 build-scheduler.arm64v8
 
+.PHONY: build.arm64
+build.arm64: build-controller.arm64v8 build-scheduler.arm64v8
+
 .PHONY: build.ppc64le
 build.ppc64le: build-controller.ppc64le build-scheduler.ppc64le
 
@@ -69,6 +72,9 @@ build-controller.amd64:
 .PHONY: build-controller.arm64v8
 build-controller.arm64v8:
 	$(COMMONENVVAR) $(BUILDENVVAR) GOARCH=arm64 go build -ldflags '-w' -o bin/controller cmd/controller/controller.go
+
+.PHONY: build-controller.arm64
+build-controller.arm64: build-controller.arm64v8
 
 .PHONY: build-controller.ppc64le
 build-controller.ppc64le:
@@ -89,6 +95,9 @@ build-scheduler.amd64:
 .PHONY: build-scheduler.arm64v8
 build-scheduler.arm64v8:
 	$(COMMONENVVAR) $(BUILDENVVAR) GOARCH=arm64 go build -ldflags '-X k8s.io/component-base/version.gitVersion=$(VERSION) -w' -o bin/kube-scheduler cmd/scheduler/main.go
+
+.PHONY: build-scheduler.arm64
+build-scheduler.arm64: build-scheduler.arm64v8
 
 .PHONY: build-scheduler.ppc64le
 build-scheduler.ppc64le:
